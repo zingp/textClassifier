@@ -58,6 +58,7 @@ def train(config, model, train_iter, dev_iter, test_iter):
             loss = F.cross_entropy(outputs, labels)
             loss.backward()
             optimizer.step()
+            #print("total_batch", total_batch)
             if total_batch % 100 == 0:
                 # 每多少轮输出在训练集和验证集上的效果
                 true = labels.data.cpu()
