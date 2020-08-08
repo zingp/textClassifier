@@ -20,9 +20,9 @@ class Config(object):
 
         self.require_improvement = 1000                                 # 若超过1000batch效果还没提升，则提前结束训练
         self.num_classes = len(self.class_list)                         # 类别数
-        self.num_epochs = 3                                             # epoch数
-        self.batch_size = 128                                           # mini-batch大小
-        self.pad_size = 32                                              # 每句话处理成的长度(短填长切)
+        self.num_epochs = 5                                             # epoch数
+        self.batch_size = 16                                           # mini-batch大小
+        self.pad_size = 128                                              # 每句话处理成的长度(短填长切)
         self.learning_rate = 5e-5                                       # 学习率
         self.bert_path = './bert_pretrain'
         self.tokenizer = BertTokenizer.from_pretrained(self.bert_path)
@@ -41,7 +41,7 @@ class Model(nn.Module):
         self.bert = BertModel.from_pretrained(config.bert_path)
         for param in self.bert.parameters():
             param.requires_grad = True
-        self.lstm = nn.LSTM(config.hidden_size, config.rnn_hidden, config.num_layers,
+        self.lstm = nn.GRU(config.hidden_size, config.rnn_hidden, config.num_layers,
                             bidirectional=True, batch_first=True, dropout=config.dropout)
         self.dropout = nn.Dropout(config.dropout)
         self.fc_rnn = nn.Linear(config.rnn_hidden * 2, config.num_classes)
