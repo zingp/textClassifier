@@ -45,10 +45,10 @@ def train(config, model, train_iter, dev_iter, test_iter):
                          lr=config.learning_rate,
                          warmup=0.05,
                          t_total=len(train_iter) * config.num_epochs)
-    total_batch = 0  # 记录进行到多少batch
+    total_batch = 0    # 记录进行到多少batch
     dev_best_loss = float('inf')
     last_improve = 0  # 记录上次验证集loss下降的batch数
-    flag = False  # 记录是否很久没有效果提升
+    flag = False      # 记录是否很久没有效果提升
     model.train()
     for epoch in range(config.num_epochs):
         print('Epoch [{}/{}]'.format(epoch + 1, config.num_epochs))
@@ -58,7 +58,6 @@ def train(config, model, train_iter, dev_iter, test_iter):
             loss = F.cross_entropy(outputs, labels)
             loss.backward()
             optimizer.step()
-            #print("total_batch", total_batch)
             if total_batch % 100 == 0:
                 # 每多少轮输出在训练集和验证集上的效果
                 true = labels.data.cpu()
@@ -84,26 +83,50 @@ def train(config, model, train_iter, dev_iter, test_iter):
                 break
         if flag:
             break
-    test(config, model, test_iter)
+    test(config, model, test_iter, rate=0.5)
 
 
-def test(config, model, test_iter):
+def test(config, model, data_iter, rate=0.5):
     # test
+    # 把不安全的打印出来
     model.load_state_dict(torch.load(config.save_path))
     model.eval()
     start_time = time.time()
-    test_acc, test_loss, test_report, test_confusion = evaluate(config, model, test_iter, test=True)
+    loss_total = 0
+    predict_all = np.array([], dtype=int)
+    labels_all = np.array([], dtype=int)
+    #unsafe_pred_err = []
+    with torch.no_grad():
+        for texts, labels in data_iter:
+            outputs = model(texts)
+            loss = F.cross_entropy(outputs, labels)
+            loss_total += loss
+            labels = labels.data.cpu().numpy()
+            pred_softmax = F.softmax(outputs.data, dim=1)
+            predic = (pred_softmax[::, 1] >= rate).cpu().numpy()
+            # for i, (y, p) in enumerate(zip(labels, predic)):
+            #     if y == 1 and p == 0:
+            #         print(texts[[0]])
+            #         print(config.tokenizer.convert_ids_to_tokens(texts[0]))
+            labels_all = np.append(labels_all, labels)
+            predict_all = np.append(predict_all, predic)
+
+    test_acc = metrics.accuracy_score(labels_all, predict_all)
+    test_loss = loss_total / len(data_iter)
+    report = metrics.classification_report(labels_all, predict_all, target_names=config.class_list, digits=4)
+    confusion = metrics.confusion_matrix(labels_all, predict_all)
+    
     msg = 'Test Loss: {0:>5.2},  Test Acc: {1:>6.2%}'
     print(msg.format(test_loss, test_acc))
     print("Precision, Recall and F1-Score...")
-    print(test_report)
+    print(report)
     print("Confusion Matrix...")
-    print(test_confusion)
+    print(confusion)
     time_dif = get_time_dif(start_time)
     print("Time usage:", time_dif)
 
 
-def evaluate(config, model, data_iter, test=False):
+def evaluate(config, model, data_iter):
     model.eval()
     loss_total = 0
     predict_all = np.array([], dtype=int)
@@ -119,8 +142,5 @@ def evaluate(config, model, data_iter, test=False):
             predict_all = np.append(predict_all, predic)
 
     acc = metrics.accuracy_score(labels_all, predict_all)
-    if test:
-        report = metrics.classification_report(labels_all, predict_all, target_names=config.class_list, digits=4)
-        confusion = metrics.confusion_matrix(labels_all, predict_all)
-        return acc, loss_total / len(data_iter), report, confusion
     return acc, loss_total / len(data_iter)
+

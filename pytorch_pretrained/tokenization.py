@@ -131,7 +131,7 @@ class BertTokenizer(object):
         """Converts a sequence of ids in wordpiece tokens using the vocab."""
         tokens = []
         for i in ids:
-            tokens.append(self.ids_to_tokens[i])
+            tokens.append(self.ids_to_tokens.get(i.item(), "UNK"))
         return tokens
 
     def save_vocabulary(self, vocab_path):

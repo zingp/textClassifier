@@ -7,7 +7,8 @@ sys.path.append(BASEDIR)
 import time
 import torch
 import numpy as np
-from train_eval import train, init_network
+from train_eval import train, init_network, test
+#from train_bce import train, init_network
 from importlib import import_module
 import argparse
 from utils import build_dataset, build_iterator, get_time_dif
@@ -16,13 +17,14 @@ import sys
 
 parser = argparse.ArgumentParser(description='Chinese Text Classification')
 parser.add_argument('--model', type=str, required=True, help='choose a model: Bert, ERNIE')
+parser.add_argument('--test', type=bool, default=False, help='is test')
 args = parser.parse_args()
 
 
 if __name__ == '__main__':
     #dataset = 'THUCNews'  # 数据集
     #dataset = 'data'  # 数据集
-    dataset = 'comments_data'  # 数据集
+    dataset = 'live_data'  # 数据集
 
     model_name = args.model  # bert
     x = import_module('models.' + model_name)
@@ -41,7 +43,9 @@ if __name__ == '__main__':
     test_iter = build_iterator(test_data, config)
     time_dif = get_time_dif(start_time)
     print("Time usage:", time_dif)
-
     # train
     model = x.Model(config).to(config.device)
-    train(config, model, train_iter, dev_iter, test_iter)
+    if args.test:
+        test(config, model, test_iter, rate=0.1)
+    else:
+        train(config, model, train_iter, dev_iter, test_iter)
