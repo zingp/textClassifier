@@ -2,8 +2,8 @@
 import os
 import torch
 import torch.nn as nn
-# from pytorch_pretrained_bert import BertModel, BertTokenizer
-from pytorch_pretrained import BertModel, BertTokenizer
+# from pytorch_pretrained import BertModel, BertTokenizer
+from transformers import BertTokenizer, BertModel
 
 
 class Config(object):
@@ -23,7 +23,7 @@ class Config(object):
 
         self.require_improvement = 1000                                 # 若超过1000batch效果还没提升，则提前结束训练
         self.num_classes = len(self.class_list)                         # 类别数
-        #self.num_classes = 1                        # 类别数
+        #self.num_classes = 1                                           # 类别数
         self.num_epochs = 5                                             # epoch数
         self.batch_size = 16                                           # mini-batch大小
         self.pad_size = 128                                              # 每句话处理成的长度(短填长切)
@@ -45,7 +45,7 @@ class Model(nn.Module):
     def forward(self, x):
         context = x[0]  # 输入的句子
         mask = x[2]  # 对padding部分进行mask，和句子一个size，padding部分用0表示，如：[1, 1, 1, 1, 0, 0]
-        _, pooled = self.bert(context, attention_mask=mask, output_all_encoded_layers=False)
+        #_, pooled = self.bert(context, attention_mask=mask, output_all_encoded_layers=False)
         """
         参数:
         	config: bert模型的参数
@@ -57,5 +57,6 @@ class Model(nn.Module):
                 `pooled_output`: 用来训练两句话类型的bert模型的输出，FloatTensor类型，shape是[batch_size, hidden_size] 
            https://zhuanlan.zhihu.com/p/56155191
        """
+       _, pooled = self.bert(context, attention_mask=mask)
         out = self.fc(pooled)
         return out
