@@ -43,16 +43,5 @@ class Model(nn.Module):
         context = x[0]  # 输入的句子
         mask = x[2]  # 对padding部分进行mask，和句子一个size，padding部分用0表示，如：[1, 1, 1, 1, 0, 0]
         _, pooled = self.albert(context, attention_mask=mask)
-        """
-        参数:
-        	config: bert模型的参数
-    		输入和BertForSequenceClassification基本一样，少了标签，多了一个output_all_encoded_layers用来控制是否输出每一层的状态   
-    		输出是shape为 (encoded_layers, pooled_output)的元组
-        	`encoded_layers`: 通过output_all_encoded_layers参数控制:
-                `output_all_encoded_layers=True`: 输出每个层encoded-hidden-states的列表，每层状态的类型是FloatTensor，shape是 [batch_size, sequence_length, hidden_size]
-                `output_all_encoded_layers=False`: 只输出最后一层状态，shape是[batch_size, sequence_length, hidden_size],
-                `pooled_output`: 用来训练两句话类型的bert模型的输出，FloatTensor类型，shape是[batch_size, hidden_size] 
-           https://zhuanlan.zhihu.com/p/56155191
-       """
         out = self.fc(pooled)
         return out

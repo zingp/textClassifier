@@ -46,7 +46,7 @@ class DatasetIterater(object):
         self.batches = batches
         self.n_batches = len(batches) // batch_size
         self.residue = False  # 记录batch数量是否为整数
-        if len(batches) % self.n_batches != 0:
+        if self.n_batches and len(batches) % self.n_batches != 0:
             self.residue = True
         self.index = 0
         self.device = device
@@ -67,7 +67,7 @@ class DatasetIterater(object):
             batches = self._to_tensor(batches)
             return batches
 
-        elif self.index > self.n_batches:
+        elif self.index >= self.n_batches:
             self.index = 0
             raise StopIteration
         else:
