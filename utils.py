@@ -36,8 +36,8 @@ def build_dataset(config):
                     continue
                 text, label = line.split('\t')
                 inputs_dict = tokernizer.encode_plus(text,
-                                            padding=True,
-                                            #truncation=True,
+                                            padding='max_length',
+                                            truncation=True,
                                             max_length=max_len,  
                                             pad_to_max_length=True, 
                                             return_attention_mask=True,
@@ -65,13 +65,10 @@ class DatasetIterater(object):
         self.device = device
 
     def _to_tensor(self, datas):
-        x = torch.LongTensor([_[0] for _ in datas]).to(self.device)
-        y = torch.LongTensor([_[1] for _ in datas]).to(self.device)
-
-        # pad前的长度(超过pad_size的设为pad_size)
-        seq_len = torch.LongTensor([_[2] for _ in datas]).to(self.device)
-        mask = torch.LongTensor([_[3] for _ in datas]).to(self.device)
-        return (x, seq_len, mask), y
+        x = torch.cat([_[0] for _ in datas], 0).to(self.device)
+        mask = torch.cat([_[1]  for _ in datas], 0).to(self.device)
+        y = torch.LongTensor([_[2] for _ in datas]).to(self.device)
+        return x, mask, y
 
     def __next__(self):
         if self.residue and self.index == self.n_batches:

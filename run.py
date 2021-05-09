@@ -78,10 +78,7 @@ if __name__ == '__main__':
     test_iter = build_iterator(test_data, config)
     # train
     model = x.Model(config).to(config.device)
-    print("Done")
-    """
     if args.test:
         test(config, model, test_iter, rate=args.rate)
     else:
         train(config, model, train_iter, dev_iter, test_iter)
-    """

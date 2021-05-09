@@ -51,13 +51,13 @@ def train(config, model, train_iter, dev_iter, test_iter):
     model.train()
     for epoch in range(config.num_epochs):
         print('Epoch [{}/{}]'.format(epoch + 1, config.num_epochs))
-        for i, (trains, labels) in enumerate(train_iter):
-            outputs = model(trains)
+        for i, (input_ids, masks, labels) in enumerate(train_iter):
+            outputs = model(input_ids, masks)
             model.zero_grad()
             loss = F.cross_entropy(outputs, labels)
             loss.backward()
             optimizer.step()
-            if total_batch % 100 == 0:
+            if total_batch % 10 == 0:
                 # 每多少轮输出在训练集和验证集上的效果
                 true = labels.data.cpu()
                 predic = torch.max(outputs.data, 1)[1].cpu()
@@ -96,8 +96,8 @@ def test(config, model, data_iter, rate=0.5):
     labels_all = np.array([], dtype=int)
     #unsafe_pred_err = []
     with torch.no_grad():
-        for texts, labels in data_iter:
-            outputs = model(texts)
+        for input_ids, masks, labels in data_iter:
+            outputs = model(input_ids, mask)
             loss = F.cross_entropy(outputs, labels)
             loss_total += loss
             labels = labels.data.cpu().numpy()
@@ -131,8 +131,8 @@ def evaluate(config, model, data_iter):
     predict_all = np.array([], dtype=int)
     labels_all = np.array([], dtype=int)
     with torch.no_grad():
-        for texts, labels in data_iter:
-            outputs = model(texts)
+        for input_ids, masks, labels in data_iter:
+            outputs = model(input_ids, masks)
             loss = F.cross_entropy(outputs, labels)
             loss_total += loss
             labels = labels.data.cpu().numpy()
