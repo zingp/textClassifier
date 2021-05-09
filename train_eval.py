@@ -9,7 +9,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn import metrics
-from utils import time_diff
+from utils import time_diff, decode_to_word
 from pytorch_pretrained.optimization import BertAdam
 
 
@@ -104,8 +104,7 @@ def test(config, model, data_iter, rate=0.5):
             predic = (pred_softmax[::, 1] >= rate).cpu().numpy()
             for i, (y, p) in enumerate(zip(labels, predic)):
                 if y == 1 and p == 0:
-                    print(input_ids[i])
-                    print(config.tokenizer.decode(input_ids[i].data.cpu().numpy().reshape(-1)))
+                    print(decode_to_word(config.tokenizer, input_ids[i]))
             labels_all = np.append(labels_all, labels)
             predict_all = np.append(predict_all, predic)
 

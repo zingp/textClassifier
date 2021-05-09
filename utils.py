@@ -120,3 +120,8 @@ def time_diff(start_time):
     time_dif = end_time - start_time
     return timedelta(seconds=int(round(time_dif)))
 
+
+def decode_to_word(tokenizer, input_ids):
+    ids = input_ids.data.cpu().numpy().reshape(-1)
+    token = tokenizer.decode(ids[ids>0])
+    return token
