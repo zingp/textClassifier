@@ -1,42 +1,55 @@
 # coding: UTF-8
-import torch
-from tqdm import tqdm
 import time
+import torch
+import random
+import numpy as np
+from tqdm import tqdm
 from datetime import timedelta
 
-PAD, CLS = '[PAD]', '[CLS]'  # padding符号, bert中综合信息符号
+def timer(module):
+    """统计函数耗时的装饰器
+    Args:
+        module (str): Description of the function being timed.
+    """
+    def wrapper(func):
+        def cal_time(*args, **kwargs):
+            t1 = time.time()
+            res = func(*args, **kwargs)
+            t2 = time.time()
+            duration = round(t2 - t1, 4)
+            print('{} duration={} secs.'.format(module, duration))
+            return res
+        return cal_time
+    return wrapper
 
 
 def build_dataset(config):
-
-    def load_dataset(path, pad_size=32):
+    @timer("load_dataset")
+    def load_dataset(path, max_len=128):
+        tokernizer = config.tokenizer
         contents = []
         with open(path, 'r', encoding='UTF-8') as f:
             for line in tqdm(f):
-                lin = line.strip()
-                if not lin:
+                line = line.strip()
+                # 如果是空行
+                if not line:
                     continue
-                content, label = lin.split('\t')
-                #print("content>>>:", content)
-                token = config.tokenizer.tokenize(content)
-                token = [CLS] + token
-                seq_len = len(token)
-                mask = []
-                token_ids = config.tokenizer.convert_tokens_to_ids(token)
-
-                if pad_size:
-                    if len(token) < pad_size:
-                        mask = [1] * len(token_ids) + [0] * (pad_size - len(token))
-                        token_ids += ([0] * (pad_size - len(token)))
-                    else:
-                        mask = [1] * pad_size
-                        token_ids = token_ids[:pad_size]
-                        seq_len = pad_size
-                contents.append((token_ids, int(label), seq_len, mask))
+                text, label = line.split('\t')
+                inputs_dict = tokernizer.encode_plus(text,
+                                            padding=True,
+                                            #truncation=True,
+                                            max_length=max_len,  
+                                            pad_to_max_length=True, 
+                                            return_attention_mask=True,
+                                            return_tensors="pt")
+                input_ids = inputs_dict['input_ids']
+                attention_mask = inputs_dict['attention_mask']
+                contents.append((input_ids, attention_mask, int(label)))
         return contents
-    train = load_dataset(config.train_path, config.pad_size)
-    dev = load_dataset(config.dev_path, config.pad_size)
-    test = load_dataset(config.test_path, config.pad_size)
+
+    train = load_dataset(config.train_path, config.max_len)
+    dev = load_dataset(config.dev_path, config.max_len)
+    test = load_dataset(config.test_path, config.max_len)
     return train, dev, test
 
 
@@ -91,8 +104,15 @@ def build_iterator(dataset, config):
     return iter
 
 
-def get_time_dif(start_time):
-    """获取已使用时间"""
-    end_time = time.time()
-    time_dif = end_time - start_time
-    return timedelta(seconds=int(round(time_dif)))
+def set_rand_seed(seed=123):
+    """设置随机种子"""
+    print("Random Seed: ", seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    # torch.backends.cudnn.enabled = False       
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True 
+

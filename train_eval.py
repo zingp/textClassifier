@@ -1,15 +1,14 @@
 # coding: UTF-8
-import sys
 import os
+import sys
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(BASEDIR)
-import numpy as np
+import time
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn import metrics
-import time
-from utils import get_time_dif
 from pytorch_pretrained.optimization import BertAdam
 
 
@@ -71,7 +70,7 @@ def train(config, model, train_iter, dev_iter, test_iter):
                     last_improve = total_batch
                 else:
                     improve = ''
-                time_dif = get_time_dif(start_time)
+                time_dif = round(time.time() - start_time, 4)
                 msg = 'Iter: {0:>6},  Train Loss: {1:>5.2},  Train Acc: {2:>6.2%},  Val Loss: {3:>5.2},  Val Acc: {4:>6.2%},  Time: {5} {6}'
                 print(msg.format(total_batch, loss.item(), train_acc, dev_loss, dev_acc, time_dif, improve))
                 model.train()

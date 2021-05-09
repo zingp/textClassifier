@@ -7,18 +7,18 @@ sys.path.append(BASEDIR)
 
 import time
 import torch
+import random
 import argparse
-import torch.nn.functional as F
-from datetime import timedelta
 import numpy as np
 from tqdm import tqdm
+import torch.nn.functional as F
+from datetime import timedelta
 from train_eval import init_network, test
 from importlib import import_module
 from utils import  get_time_dif
 from sklearn import metrics
-import random
 
-random.seed(1)
+random.seed(123)
 
 PAD, CLS = '[PAD]', '[CLS]'  # padding符号, bert中综合信息符号
 

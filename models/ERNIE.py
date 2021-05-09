@@ -1,8 +1,7 @@
 # coding: UTF-8
 import torch
 import torch.nn as nn
-# from pytorch_pretrained_bert import BertModel, BertTokenizer
-from pytorch_pretrained import BertModel, BertTokenizer
+from transformers import BertTokenizer, BertModel
 
 class Config(object):
 
