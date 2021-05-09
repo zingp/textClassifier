@@ -102,10 +102,10 @@ def test(config, model, data_iter, rate=0.5):
             labels = labels.data.cpu().numpy()
             pred_softmax = F.softmax(outputs.data, dim=1)
             predic = (pred_softmax[::, 1] >= rate).cpu().numpy()
-            # for i, (y, p) in enumerate(zip(labels, predic)):
-            #     if y == 1 and p == 0:
-            #         print(texts[[0]])
-            #         print(config.tokenizer.convert_ids_to_tokens(texts[0]))
+            for i, (y, p) in enumerate(zip(labels, predic)):
+                if y == 1 and p == 0:
+                    print(input_ids[i])
+                    print(config.tokenizer.decode(input_ids[i].data.cpu().numpy().reshape(-1)))
             labels_all = np.append(labels_all, labels)
             predict_all = np.append(predict_all, predic)
 
@@ -120,7 +120,7 @@ def test(config, model, data_iter, rate=0.5):
     print(report)
     print("Confusion Matrix...")
     print(confusion)
-    time_dif = get_time_dif(start_time)
+    time_dif = time_diff(start_time)
     print("Time usage:", time_dif)
 
 
