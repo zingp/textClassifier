@@ -20,7 +20,7 @@ class Config(object):
            os.makedirs(dataset + '/saved_dict/')
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')   # 设备
 
-        self.require_improvement = 2000                                 # 若超过1000batch效果还没提升，则提前结束训练
+        self.require_improvement = 20                                 # 若超过1000batch效果还没提升，则提前结束训练
         self.num_classes = len(self.class_list)                         # 类别数
         self.num_epochs = 5                                             # epoch数
         self.batch_size = 16                                           # mini-batch大小

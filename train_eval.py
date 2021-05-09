@@ -9,6 +9,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn import metrics
+from utils import time_diff
 from pytorch_pretrained.optimization import BertAdam
 
 
@@ -44,10 +45,9 @@ def train(config, model, train_iter, dev_iter, test_iter):
                          lr=config.learning_rate,
                          warmup=0.05,
                          t_total=len(train_iter) * config.num_epochs)
-    total_batch = 0    # 记录进行到多少batch
-    dev_best_loss = float('inf')
-    last_improve = 0  # 记录上次验证集loss下降的batch数
-    flag = False      # 记录是否很久没有效果提升
+    total_batch, last_improve = 0, 0    # 记录进行到多少batch, 上次验证集loss下降的batch数
+    dev_min_loss = float('inf')
+    early_stop = False      # 记录是否很久没有效果提升
     model.train()
     for epoch in range(config.num_epochs):
         print('Epoch [{}/{}]'.format(epoch + 1, config.num_epochs))
@@ -63,14 +63,14 @@ def train(config, model, train_iter, dev_iter, test_iter):
                 predic = torch.max(outputs.data, 1)[1].cpu()
                 train_acc = metrics.accuracy_score(true, predic)
                 dev_acc, dev_loss = evaluate(config, model, dev_iter)
-                if dev_loss < dev_best_loss:
-                    dev_best_loss = dev_loss
+                if dev_loss < dev_min_loss:
+                    dev_min_loss = dev_loss
                     torch.save(model.state_dict(), config.save_path)
                     improve = '*'
                     last_improve = total_batch
                 else:
                     improve = ''
-                time_dif = round(time.time() - start_time, 4)
+                time_dif = time_diff(start_time)
                 msg = 'Iter: {0:>6},  Train Loss: {1:>5.2},  Train Acc: {2:>6.2%},  Val Loss: {3:>5.2},  Val Acc: {4:>6.2%},  Time: {5} {6}'
                 print(msg.format(total_batch, loss.item(), train_acc, dev_loss, dev_acc, time_dif, improve))
                 model.train()
@@ -78,15 +78,14 @@ def train(config, model, train_iter, dev_iter, test_iter):
             if total_batch - last_improve > config.require_improvement:
                 # 验证集loss超过1000batch没下降，结束训练
                 print("No optimization for a long time, auto-stopping...")
-                flag = True
+                early_stop = True
                 break
-        if flag:
+        if early_stop:
             break
     test(config, model, test_iter, rate=0.5)
 
 
 def test(config, model, data_iter, rate=0.5):
-    # test
     # 把不安全的打印出来
     model.load_state_dict(torch.load(config.save_path))
     model.eval()
@@ -97,7 +96,7 @@ def test(config, model, data_iter, rate=0.5):
     #unsafe_pred_err = []
     with torch.no_grad():
         for input_ids, masks, labels in data_iter:
-            outputs = model(input_ids, mask)
+            outputs = model(input_ids, masks)
             loss = F.cross_entropy(outputs, labels)
             loss_total += loss
             labels = labels.data.cpu().numpy()
