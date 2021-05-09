@@ -13,25 +13,6 @@ from utils import time_diff, decode_to_word
 from pytorch_pretrained.optimization import BertAdam
 
 
-# 权重初始化，默认xavier
-def init_network(model, method='xavier', exclude='embedding', seed=123):
-    for name, w in model.named_parameters():
-        if exclude not in name:
-            if len(w.size()) < 2:
-                continue
-            if 'weight' in name:
-                if method == 'xavier':
-                    nn.init.xavier_normal_(w)
-                elif method == 'kaiming':
-                    nn.init.kaiming_normal_(w)
-                else:
-                    nn.init.normal_(w)
-            elif 'bias' in name:
-                nn.init.constant_(w, 0)
-            else:
-                pass
-
-
 def train(config, model, train_iter, dev_iter, test_iter):
     start_time = time.time()
     model.train()
@@ -47,7 +28,7 @@ def train(config, model, train_iter, dev_iter, test_iter):
                          t_total=len(train_iter) * config.num_epochs)
     total_batch, last_improve = 0, 0    # 记录进行到多少batch, 上次验证集loss下降的batch数
     dev_min_loss = float('inf')
-    early_stop = False      # 记录是否很久没有效果提升
+    early_stop = False                  # 记录是否很久没有效果提升
     model.train()
     for epoch in range(config.num_epochs):
         print('Epoch [{}/{}]'.format(epoch + 1, config.num_epochs))

@@ -8,7 +8,7 @@ import time
 import argparse
 from pprint import pprint
 from importlib import import_module
-from train_eval import train, init_network, test
+from train_eval import train, test
 from utils import build_dataset, build_iterator, set_rand_seed
 
 
